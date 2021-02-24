@@ -1,5 +1,11 @@
 /*
 	Project 1: Fork & Pipe Example
+	Written By: Kane Eder
+	Class: Operating Syst and Systems Prg
+	Description: 
+		Fork a child proccess that applies the Collatz Conjecture
+		to a command line argument. Use pipes to communicate between
+		child and parent.
 */
 #include <stdio.h>
 #include <unistd.h>
