@@ -1,12 +1,13 @@
-/*
-	Project 1: Fork & Pipe Example
-	Written By: Kane Eder
-	Class: Operating Syst and Systems Prg
-	Description: 
-		Fork a child proccess that applies the Collatz Conjecture
-		to a command line argument. Use pipes to communicate between
-		child and parent.
-*/
+//Project1.c - Fork & Pipe Collatz Conjecture Calculation
+//
+//Author: Kane Eder
+//  Date: Feb 24, 2021
+//Course: EECS 3540 (Operating Systems and Systems Programming)
+//
+//Purpose: 	This program demonstrates how to use pipes to comunicate back and forth between Parent
+//			and Child proccesses. The Parent will pass the child a long long and the Child
+//			will apply the Collatz Conjecture, pipeing each calculated value back to the Parent.
+//
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
