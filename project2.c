@@ -21,6 +21,7 @@
 int *LIST; 
 int THRESHOLD;
 int SIZE;
+int SEED = 0;
 typedef struct 
 {
 	int lo;
@@ -34,6 +35,21 @@ bool isSorted();
 
 int main(int argc, char *argv[])
 {
+	clock_t cpu_start, cpu_end,
+			create_start, create_end,
+        	initialize_start, initialize_end,
+            scramble_start, scramble_end,
+			sort_cpu_s, sort_cpu_e,
+			partition_start, partition_end;
+	struct timeval 	wall_start, wall_end,
+					sort_wall_s, sort_wall_e;
+	double 	create_time, initialize_time, scramble_time,
+			partition_time, 
+			sort_wall_total, sort_cpu_total, wall_total, cpu_total;
+	
+	cpu_start = clock();
+	gettimeofday(&wall_start, NULL);
+	
 	bool multithread = true;
 	int pieces = 9;
 	int maxthreads = 4;	
@@ -46,6 +62,7 @@ int main(int argc, char *argv[])
 			maxthreads = atoi(argv[6]);
 		case 6: // Set # of Pieces
 			pieces = atoi(argv[5])-1;
+			if (pieces < maxthreads) {return -1;}
 		case 5: // turn Multithreading On/Off
 			if(*argv[4] == 'n' || *argv[4] == 'N')
 			{
@@ -53,38 +70,37 @@ int main(int argc, char *argv[])
 				multithread = false;
 			}
 		case 4: //Set Seed
-			if(atoi(argv[3]) == -1) 
+			SEED = atoi(argv[3]);
+			if(SEED == -1) 
 			{
 				srand(clock());
 			}else{
-				srand(atoi(argv[3]));
+				srand(SEED);
 			}
 		case 3: // Set size & threshold
 			THRESHOLD = atoi(argv[2]);
 			SIZE = atoi(argv[1]);
+			if (pieces >= SIZE) {return -1;}
 			break;
-		defult:	// Print Error if Wrong Number of Arguments
+		default:	// Print Error if Wrong Number of Arguments
 			printf("usage: ./project2 SIZE THRESHOLD [SEED [MULTITHREAD [PIECES [THREADS]]]]\n");
 			return -1;
 	}
 	/* ==================================
 		 Make Array of Rands
 	 ==================================*/
-	clock_t create_start, create_end,
-        	initialize_start, initialize_end,
-            scramble_start, scramble_end;
 		// Create Array
 	create_start = clock();
 	LIST = (int *)malloc(SIZE * sizeof(int));
 	create_end = clock();
-	printf("Array created in \t%0.3f seconds\n",((double)create_end - (double)create_start)/CLOCKS_PER_SEC);
+	create_time = ((double)create_end - (double)create_start)/CLOCKS_PER_SEC;
 		// Initialize Array
 	initialize_start = clock();
 	for (int i = 0; i < SIZE; i++) { 
 		*(LIST + i) = i; 
 	}
 	initialize_end = clock();
-	printf("Array initialized in \t%0.3f seconds\n",((double)initialize_end - (double)initialize_start)/CLOCKS_PER_SEC);
+	initialize_time = ((double)initialize_end - (double)initialize_start)/CLOCKS_PER_SEC;
 		// Scramble Array
 	scramble_start= clock();
 	for (int i = 0; i < SIZE; i++)
@@ -95,18 +111,17 @@ int main(int argc, char *argv[])
        		*(LIST+r) = temp;
         }
 	scramble_end = clock();
-	printf("Array scrambled in \t%0.3f seconds\n",((double)scramble_end - (double)scramble_start)/CLOCKS_PER_SEC);
+	scramble_time = ((double)scramble_end - (double)scramble_start)/CLOCKS_PER_SEC;
+
+	cpu_start = clock();
+	gettimeofday(&sort_wall_s, NULL);
+	partition_start = clock();
 	
-	clock_t cpu_start, cpu_end;
-	struct timeval start_time, end_time;
 	if(multithread)
 	{
 	/* ==================================
                  Partition Segments
          ==================================*/
-	printf("Creating Multiple Partitions\n");
-	clock_t partition_start, partition_end;
-	partition_start = clock();
 
 	param *parts= (param *) malloc(pieces * sizeof(param));
 	int lo, hi, size, i, count = 0;
@@ -122,7 +137,6 @@ int main(int argc, char *argv[])
 			hi = (parts + count)->hi;
 			size= (parts + count)->size;
 			count--;
-			printf("Partitioning %9i - %9i (%9i)...",lo, hi, size);
 			int p = partition(lo, hi);
 			left->lo = lo;
 			left->hi = p-1;
@@ -130,7 +144,6 @@ int main(int argc, char *argv[])
 			right->lo = p+1;
 			right->hi = hi;
 			right->size = (hi - (p+1));
-			printf("result: %9i - %9i (%0.1f / %0.1f)\n", left->size, right->size, ((double)left->size/(double)size) * 100,((double)right->size/(double)size) * 100);
 			i = count;
 			while(left->size < (parts + i)->size && i >=0)
 			{
@@ -150,25 +163,18 @@ int main(int argc, char *argv[])
 			count++;
 		}
 		partition_end = clock();
-		printf("Partitions built in %0.3f seconds\n",((double)partition_end - (double)partition_start)/CLOCKS_PER_SEC);
-		for(int i = 0; i < pieces; i++)
-		{
-			printf(" %d: %9i - %9i ( %9i - %0.1f)\n",i ,(parts + i)->lo, (parts + i)->hi, (parts+ i)->size, ((double)(parts + i)->size/(double)SIZE) * 100);
-		}
-	        /* ==================================
+		partition_time = ((double)partition_end - (double)partition_start)/CLOCKS_PER_SEC;
+	 		/* ==================================
 	                   Create Threads
 	         ==================================*/
 		int ret_val;		
 		pthread_t tid[maxthreads];	
 		pthread_attr_t attr[maxthreads];
 		
-		cpu_start = clock();
-		gettimeofday(&start_time, NULL);
-		
 		for (int i=0; i < maxthreads; i++) 
 		{	
 			pthread_attr_init(&attr[i]); 
-			printf("Launching %9i to %9i (%9i): (# %d)\n",(parts+count)->lo, (parts+count)->hi, (parts+count)->size, count);
+			printf("(%9i, %9i, %9i)\n",(parts+count)->lo, (parts+count)->hi, (parts+count)->size);   
 			pthread_create(&tid[i], &attr[i], quicksort, (parts + count)); 
 			count--;
 		}	
@@ -179,7 +185,7 @@ int main(int argc, char *argv[])
 				ret_val = pthread_tryjoin_np(tid[i],NULL); 
 				if (ret_val == 0 && count >= 0) 
 				{
-					printf("Launching %9i to %9i (%9i): (# %d)\n",(parts+count)->lo, (parts+count)->hi, (parts+count)->size, count);
+					printf("(%9i, %9i, %9i)\n",(parts+count)->lo, (parts+count)->hi, (parts+count)->size);   
 					pthread_create(&tid[i], &attr[i], quicksort, (parts+count));
 					count--;
 				}
@@ -194,22 +200,26 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
+		partition_time = 0;
 		param *parts= (param *) malloc(pieces * sizeof(param));
 		(parts)->lo = 0;		// L
 		(parts)->hi = SIZE-1; 	// R
 		(parts)->size = SIZE;	// part size
-		printf("Calling Quicksort on 1 thread\n");
 		quicksort(parts);
 	}
-	cpu_end = clock();
-	gettimeofday(&end_time, NULL);
+	sort_cpu_e = clock();
+	gettimeofday(&sort_wall_e, NULL);
 
 		/* ==================================
                     Finish Up
          ==================================*/
-	double total_time = ((double)end_time.tv_sec-(double)start_time.tv_sec) + ((double)end_time.tv_usec-(double)start_time.tv_usec)/1000000;
-	double cpu_time = ((double)cpu_end - (double)cpu_start)/CLOCKS_PER_SEC;
-	printf("Seconds spent sorting: Wall clock: %0.3f / CPU: %0.3f\n",total_time ,cpu_time);
+	sort_wall_total = ((double)sort_wall_e.tv_sec-(double)sort_wall_s.tv_sec) + ((double)sort_wall_e.tv_usec-(double)sort_wall_s.tv_usec)/1000000;
+	sort_cpu_total = ((double)sort_cpu_e - (double)sort_cpu_s)/CLOCKS_PER_SEC;
+	wall_total = ((double)sort_wall_e.tv_sec-(double)wall_start.tv_sec) + ((double)sort_wall_e.tv_usec-(double)wall_start.tv_usec)/1000000;
+	cpu_total = ((double)sort_cpu_e - (double)cpu_start)/CLOCKS_PER_SEC;
+	printf("    SIZE    THRESHOLD SD PC T CREATE   INIT  SHUFFLE   PART  SrtWall Srt CPU ALLWall ALL CPU\n");
+	printf("  --------- --------- -- -- - ------ ------- ------- ------- ------- ------- ------- -------\n");
+	printf("F:%9d %9d %2d %2d %1d %0.3f  %0.3f   %0.3f   %0.3f   %0.3f   %0.3f   %0.3f   %0.3f\n",SIZE,THRESHOLD, SEED, pieces, maxthreads, create_time, initialize_time, scramble_time, partition_time, sort_wall_total, sort_cpu_total, wall_total, cpu_total);
 	
 	bool sorted = isSorted();
 	if (!sorted)
