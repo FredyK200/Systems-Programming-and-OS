@@ -219,7 +219,7 @@ int main(int argc, char *argv[])
 	cpu_total = ((double)sort_cpu_e - (double)cpu_start)/CLOCKS_PER_SEC;
 	printf("    SIZE    THRESHOLD SD PC T CREATE   INIT  SHUFFLE   PART  SrtWall Srt CPU ALLWall ALL CPU\n");
 	printf("  --------- --------- -- -- - ------ ------- ------- ------- ------- ------- ------- -------\n");
-	printf("F:%9d %9d %2d %2d %1d %0.3f  %0.3f   %0.3f   %0.3f   %0.3f   %0.3f   %0.3f   %0.3f\n",SIZE,THRESHOLD, SEED, pieces, maxthreads, create_time, initialize_time, scramble_time, partition_time, sort_wall_total, sort_cpu_total, wall_total, cpu_total);
+	printf("F:%9d %9d %02d %2d %1d %0.3f  %0.3f   %0.3f   %0.3f   %0.3f   %0.3f   %0.3f   %0.3f\n",SIZE,THRESHOLD, SEED, pieces + 1, maxthreads, create_time, initialize_time, scramble_time, partition_time, sort_wall_total, sort_cpu_total, wall_total, cpu_total);
 	
 	bool sorted = isSorted();
 	if (!sorted)
