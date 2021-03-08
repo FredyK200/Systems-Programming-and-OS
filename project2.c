@@ -235,7 +235,7 @@ int main(int argc, char *argv[])
 void *quicksort(void *threadarg)
 {
   	param *part = threadarg;
-        param *left = (param *) malloc(sizeof(param));
+    param *left = (param *) malloc(sizeof(param));
 	param *right = (param *) malloc(sizeof(param));
 	int lo = part->lo;
 	int hi = part->hi;
@@ -244,7 +244,7 @@ void *quicksort(void *threadarg)
 	{
 		return NULL;
 	}
-    else if (size == 1)
+	else if (size == 1)
     {	// COMPARE & SWAP
     	if (*(LIST+lo) > *(LIST+hi))
 		{
@@ -254,11 +254,10 @@ void *quicksort(void *threadarg)
 		}
        	return NULL;
     }
-    else if (SIZE <= THRESHOLD)	
+	else if (size <= THRESHOLD)	
 	{	// SHELL SORT
 		int k=1;
-        while(k <= hi+1){k *= 2; k = (k / 2) - 1;}
-        	
+        while(k <= hi+1){k *= 2;} k = (k / 2) - 1;
 		do{
        		for (int i=lo; i < (hi+1-k); i++)
           	{
@@ -266,10 +265,10 @@ void *quicksort(void *threadarg)
                 {
                    	if (*(LIST+j) <= *(LIST+j+k))
 					{
-						break;
+						break;	
 					}
-              		else
-					{ 
+					else
+					{
         				int temp = *(LIST+j);
         				*(LIST+j) = *(LIST+j+k);
         				*(LIST+j+k) = temp;
@@ -280,7 +279,7 @@ void *quicksort(void *threadarg)
         }while(k > 0); 
 		return NULL;
 	}
-    else if (lo < hi) 
+	else if (lo < hi)
 	{	// QUICKSORT
 		int p = partition(lo,hi);
 		left->lo = lo;
@@ -305,33 +304,33 @@ void *quicksort(void *threadarg)
 
 int partition(int lo, int hi)
 {
-        int i = lo, j = hi+1;
-        int x = *(LIST+lo);
-        do{
-                do i++; while (*(LIST+i) < x && i < hi);
-                do j--; while (*(LIST+j) > x && j > lo);
-                if (i < j)
+	int i = lo, j = hi+1;
+	int x = *(LIST+lo);
+	do{
+		do i++; while (*(LIST+i) < x && i < hi);
+        do j--; while (*(LIST+j) > x && j > lo);
+        if (i < j)	
 		{
-		        int temp = *(LIST+i);
-		        *(LIST+i) = *(LIST+j);
-		        *(LIST+j) = temp;
+			int temp = *(LIST+i);
+		    *(LIST+i) = *(LIST+j);
+   			*(LIST+j) = temp;
 		}
-                else{break;}
-        }while(true);
+		else{break;}
+	}while(true);
 	int temp = *(LIST+lo);
 	*(LIST+lo) = *(LIST+j);
 	*(LIST+j) = temp;
-        return j;
+    return j;
 }
 
 bool isSorted()
 {
-        for(int i=0; i < SIZE-1;i++)
-        {
-                if(*(LIST+i+1) != *(LIST+i) + 1)
-				{
-					return false;
-				}
-        }
-        return true;
+    for(int i=0; i < SIZE-1;i++)
+    {
+        if(*(LIST+i+1) != *(LIST+i) + 1)
+		{
+			return false;
+		}
+    }
+	return true;
 }
