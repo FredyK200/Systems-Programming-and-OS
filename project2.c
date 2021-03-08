@@ -257,7 +257,7 @@ void *quicksort(void *threadarg)
 	else if (size <= THRESHOLD)	
 	{	// SHELL SORT
 		int k=1;
-        while(k <= hi+1){k *= 2;} k = (k / 2) - 1;
+		while(k <= size+1){k *= 2;} k = (k / 2) - 1;
 		do{
        		for (int i=lo; i < (hi+1-k); i++)
           	{
